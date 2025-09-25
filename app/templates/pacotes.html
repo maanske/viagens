@@ -1,0 +1,42 @@
+{% extends "base.html" %}
+
+{% block content %}
+    <div class="d-flex justify-content-between align-items-center mb-3">
+        <h1>Pacotes de Viagem</h1>
+        <a href="{{ url_for('main.criar_pacote') }}" class="btn btn-success">
+            <i class="bi bi-plus-lg"></i> Novo Pacote
+        </a>
+    </div>
+
+    <div class="list-group">
+        {% for pacote in pacotes %}
+            <div class="list-group-item list-group-item-action">
+                <div class="d-flex w-100 justify-content-between">
+                    <h5 class="mb-1">{{ pacote.destino }}</h5>
+                    <small>De {{ pacote.data_inicio.strftime('%d/%m/%Y') }} a {{ pacote.data_fim.strftime('%d/%m/%Y') }}</small>
+                </div>
+                <p class="mb-1">Preço: R$ {{ "%.2f"|format(pacote.preco) }}</p>
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        {% if pacote.vagas_disponiveis == 0 %}
+                            <span class="badge text-bg-danger">Esgotado</span>
+                        {% elif pacote.vagas_disponiveis < 5 %}
+                            <span class="badge text-bg-warning">Últimas Vagas!</span>
+                        {% endif %}
+                        <small>Vagas: {{ pacote.vagas_disponiveis }} / {{ pacote.vagas_total }}</small>
+                    </div>
+                    <div>
+                        <a href="{{ url_for('main.gerenciar_reservas', pacote_id=pacote.id) }}" class="btn btn-info btn-sm">
+                            <i class="bi bi-calendar-check"></i> Reservas
+                        </a>
+                        <a href="{{ url_for('main.editar_pacote', id=pacote.id) }}" class="btn btn-secondary btn-sm">
+                            <i class="bi bi-pencil"></i> Editar
+                        </a>
+                    </div>
+                </div>
+            </div>
+        {% else %}
+            <p class="text-center">Nenhum pacote cadastrado.</p>
+        {% endfor %}
+    </div>
+{% endblock %}
