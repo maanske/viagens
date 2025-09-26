@@ -1,6 +1,11 @@
-from flask import Blueprint, render_template, flash, redirect, url_for, request
+# app/routes.py
+
+import os
+from flask import Blueprint, render_template, flash, redirect, url_for, request, current_app
+from werkzeug.utils import secure_filename
 from app import db
-from app.forms import LoginForm, PacoteForm, ReservaForm
+# Adicionado ProfileForm
+from app.forms import LoginForm, PacoteForm, ReservaForm, ProfileForm 
 from app.models import User, Pacote, Cliente, Reserva, Historico
 from flask_login import login_user, logout_user, current_user, login_required
 from datetime import datetime
@@ -10,6 +15,8 @@ bp = Blueprint('main', __name__)
 def registrar_historico(descricao):
     hist = Historico(descricao=descricao, usuario_id=current_user.id)
     db.session.add(hist)
+
+# --- ROTAS DE AUTENTICAÇÃO E PRINCIPAIS (sem alteração) ---
 
 @bp.route('/login', methods=['GET', 'POST'])
 def login():
@@ -38,6 +45,8 @@ def index():
     total_reservas = Reserva.query.filter_by(status='Ativa').count()
     return render_template('index.html', title='Dashboard', total_pacotes=total_pacotes, total_reservas=total_reservas)
 
+# --- ROTAS DE PACOTES E RESERVAS (sem alteração) ---
+# (Suas rotas de pacotes e reservas continuam aqui, inalteradas)
 @bp.route('/pacotes')
 @login_required
 def pacotes():
@@ -49,13 +58,7 @@ def pacotes():
 def criar_pacote():
     form = PacoteForm()
     if form.validate_on_submit():
-        novo_pacote = Pacote(
-            destino=form.destino.data,
-            data_inicio=form.data_inicio.data,
-            data_fim=form.data_fim.data,
-            preco=form.preco.data,
-            vagas_total=form.vagas_total.data
-        )
+        novo_pacote = Pacote(destino=form.destino.data, data_inicio=form.data_inicio.data, data_fim=form.data_fim.data, preco=form.preco.data, vagas_total=form.vagas_total.data)
         db.session.add(novo_pacote)
         registrar_historico(f"Criou o pacote para {novo_pacote.destino}")
         db.session.commit()
@@ -95,13 +98,10 @@ def gerenciar_reservas(pacote_id):
         if not cliente:
             cliente = Cliente(nome=form.nome_cliente.data, email=form.email_cliente.data)
             db.session.add(cliente)
+            # Commit para gerar o ID do cliente antes de usar na reserva
             db.session.commit()
 
-        nova_reserva = Reserva(
-            cliente_id=cliente.id,
-            pacote_id=pacote.id,
-            usuario_id=current_user.id
-        )
+        nova_reserva = Reserva(cliente_id=cliente.id, pacote_id=pacote.id, usuario_id=current_user.id)
         pacote.vagas_ocupadas += 1
         db.session.add(nova_reserva)
         registrar_historico(f"Criou reserva para o cliente {cliente.nome} no pacote {pacote.destino}")
@@ -125,3 +125,40 @@ def cancelar_reserva(reserva_id):
     else:
         flash('Esta reserva já está cancelada.', 'info')
     return redirect(url_for('main.gerenciar_reservas', pacote_id=reserva.pacote_id))
+
+
+# --- NOVAS ROTAS DE PERFIL ---
+
+def salvar_foto(form_foto):
+    """Salva a foto de perfil e retorna o nome do arquivo."""
+    nome_aleatorio = secure_filename(form_foto.filename) # Simplificado, ideal seria usar uuid
+    caminho_foto = os.path.join(current_app.root_path, 'static/profile_pics', nome_aleatorio)
+    
+    # Cria o diretório se ele não existir
+    os.makedirs(os.path.dirname(caminho_foto), exist_ok=True)
+
+    form_foto.save(caminho_foto)
+    return nome_aleatorio
+
+@bp.route('/perfil')
+@login_required
+def perfil():
+    return render_template('perfil.html', title='Meu Perfil')
+
+@bp.route('/perfil/editar', methods=['GET', 'POST'])
+@login_required
+def editar_perfil():
+    form = ProfileForm()
+    if form.validate_on_submit():
+        if form.foto_perfil.data:
+            nome_arquivo = salvar_foto(form.foto_perfil.data)
+            current_user.foto_perfil = nome_arquivo
+        current_user.nome = form.nome.data
+        db.session.commit()
+        flash('Seu perfil foi atualizado com sucesso!', 'success')
+        return redirect(url_for('main.perfil'))
+    elif request.method == 'GET':
+        form.nome.data = current_user.nome
+    
+    foto_perfil = url_for('static', filename='profile_pics/' + (current_user.foto_perfil or 'default.png'))
+    return render_template('perfil_editar.html', title='Editar Perfil', form=form, foto_perfil=foto_perfil)

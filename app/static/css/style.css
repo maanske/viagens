@@ -1,0 +1,50 @@
+:root {
+    --primary-bg-color: #ffffff;
+    --secondary-bg-color: #f8f9fa;
+    --primary-text-color: #212529;
+    --border-color: #dee2e6;
+    --navbar-bg-color: #343a40;
+}
+
+[data-theme="dark"] {
+    --primary-bg-color: #212529;
+    --secondary-bg-color: #2c3034;
+    --primary-text-color: #f8f9fa;
+    --border-color: #495057;
+    --navbar-bg-color: #000000;
+}
+
+body {
+    background-color: var(--primary-bg-color);
+    color: var(--primary-text-color);
+    transition: background-color 0.2s ease, color 0.2s ease;
+}
+
+.navbar {
+    background-color: var(--navbar-bg-color) !important;
+}
+
+.card {
+    background-color: var(--secondary-bg-color);
+    border-color: var(--border-color);
+}
+
+.form-control {
+    background-color: var(--primary-bg-color);
+    color: var(--primary-text-color);
+    border-color: var(--border-color);
+}
+
+.form-control:focus {
+    background-color: var(--primary-bg-color);
+    color: var(--primary-text-color);
+}
+
+[data-theme="dark"] .form-control {
+    color-scheme: dark;
+}
+
+.table {
+    color: var(--primary-text-color);
+    border-color: var(--border-color);
+}

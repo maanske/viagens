@@ -81,7 +81,7 @@ Siga os passos abaixo para configurar e executar o projeto em seu ambiente local
 - **3. Crie e Ative o Ambiente Virtual**
 - Windows:
     - python -m venv venv
-    - .\venv\Scripts\activate
+    - venv\Scripts\activate
 
 - macOS / Linux:   
     - python3 -m venv venv

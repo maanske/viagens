@@ -1,6 +1,9 @@
+# app/forms.py
+
 from flask_wtf import FlaskForm
-from wtforms import StringField, PasswordField, BooleanField, SubmitField, IntegerField, FloatField, DateField, SelectField
-from wtforms.validators import DataRequired, Email, EqualTo, ValidationError, NumberRange
+from flask_wtf.file import FileField, FileAllowed
+from wtforms import StringField, PasswordField, BooleanField, SubmitField, IntegerField, FloatField, DateField
+from wtforms.validators import DataRequired, Email, Length, NumberRange
 from app.models import User
 
 class LoginForm(FlaskForm):
@@ -21,3 +24,9 @@ class ReservaForm(FlaskForm):
     nome_cliente = StringField('Nome do Cliente', validators=[DataRequired()])
     email_cliente = StringField('Email do Cliente', validators=[DataRequired(), Email()])
     submit = SubmitField('Confirmar Reserva')
+
+# --- NOVO FORMULÁRIO ADICIONADO ---
+class ProfileForm(FlaskForm):
+    nome = StringField('Nome', validators=[DataRequired(), Length(min=2, max=100)])
+    foto_perfil = FileField('Atualizar Foto de Perfil', validators=[FileAllowed(['jpg', 'jpeg', 'png', 'gif'])])
+    submit = SubmitField('Salvar Alterações')
