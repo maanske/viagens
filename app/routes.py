@@ -1,10 +1,7 @@
-# app/routes.py
-
 import os
 from flask import Blueprint, render_template, flash, redirect, url_for, request, current_app
 from werkzeug.utils import secure_filename
 from app import db
-# Adicionado ProfileForm
 from app.forms import LoginForm, PacoteForm, ReservaForm, ProfileForm 
 from app.models import User, Pacote, Cliente, Reserva, Historico
 from flask_login import login_user, logout_user, current_user, login_required
@@ -16,8 +13,15 @@ def registrar_historico(descricao):
     hist = Historico(descricao=descricao, usuario_id=current_user.id)
     db.session.add(hist)
 
-# --- ROTAS DE AUTENTICAÇÃO E PRINCIPAIS (sem alteração) ---
+def salvar_foto(form_foto):
+    """Salva a foto de perfil de forma segura e retorna o nome do arquivo."""
+    filename = secure_filename(form_foto.filename)
+    caminho_completo = os.path.join(current_app.root_path, 'static/profile_pics', filename)
+    os.makedirs(os.path.dirname(caminho_completo), exist_ok=True)
+    form_foto.save(caminho_completo)
+    return filename
 
+# --- ROTAS DE AUTENTICAÇÃO E DASHBOARD ---
 @bp.route('/login', methods=['GET', 'POST'])
 def login():
     if current_user.is_authenticated:
@@ -45,8 +49,32 @@ def index():
     total_reservas = Reserva.query.filter_by(status='Ativa').count()
     return render_template('index.html', title='Dashboard', total_pacotes=total_pacotes, total_reservas=total_reservas)
 
-# --- ROTAS DE PACOTES E RESERVAS (sem alteração) ---
-# (Suas rotas de pacotes e reservas continuam aqui, inalteradas)
+# --- ROTAS DE PERFIL ---
+@bp.route('/perfil')
+@login_required
+def perfil():
+    return render_template('perfil.html', title='Meu Perfil')
+
+@bp.route('/perfil/editar', methods=['GET', 'POST'])
+@login_required
+def editar_perfil():
+    form = ProfileForm()
+    if form.validate_on_submit():
+        if form.foto_perfil.data:
+            nome_arquivo = salvar_foto(form.foto_perfil.data)
+            current_user.foto_perfil = nome_arquivo
+        current_user.nome = form.nome.data
+        db.session.commit()
+        flash('Seu perfil foi atualizado com sucesso!', 'success')
+        return redirect(url_for('main.perfil'))
+    elif request.method == 'GET':
+        form.nome.data = current_user.nome
+    
+    # CORREÇÃO: Passando a variável com um nome claro para o template.
+    foto_perfil_url = url_for('static', filename='profile_pics/' + (current_user.foto_perfil or 'default.png'))
+    return render_template('perfil_editar.html', title='Editar Perfil', form=form, foto_perfil_url=foto_perfil_url)
+
+# --- ROTAS DE PACOTES ---
 @bp.route('/pacotes')
 @login_required
 def pacotes():
@@ -82,7 +110,8 @@ def editar_pacote(id):
         flash('Pacote atualizado com sucesso!', 'success')
         return redirect(url_for('main.pacotes'))
     return render_template('form_pacote.html', title='Editar Pacote', form=form, legenda='Editar Pacote')
-    
+
+# --- ROTAS DE RESERVAS ---
 @bp.route('/reservas/<int:pacote_id>', methods=['GET', 'POST'])
 @login_required
 def gerenciar_reservas(pacote_id):
@@ -98,7 +127,6 @@ def gerenciar_reservas(pacote_id):
         if not cliente:
             cliente = Cliente(nome=form.nome_cliente.data, email=form.email_cliente.data)
             db.session.add(cliente)
-            # Commit para gerar o ID do cliente antes de usar na reserva
             db.session.commit()
 
         nova_reserva = Reserva(cliente_id=cliente.id, pacote_id=pacote.id, usuario_id=current_user.id)
@@ -125,40 +153,3 @@ def cancelar_reserva(reserva_id):
     else:
         flash('Esta reserva já está cancelada.', 'info')
     return redirect(url_for('main.gerenciar_reservas', pacote_id=reserva.pacote_id))
-
-
-# --- NOVAS ROTAS DE PERFIL ---
-
-def salvar_foto(form_foto):
-    """Salva a foto de perfil e retorna o nome do arquivo."""
-    nome_aleatorio = secure_filename(form_foto.filename) # Simplificado, ideal seria usar uuid
-    caminho_foto = os.path.join(current_app.root_path, 'static/profile_pics', nome_aleatorio)
-    
-    # Cria o diretório se ele não existir
-    os.makedirs(os.path.dirname(caminho_foto), exist_ok=True)
-
-    form_foto.save(caminho_foto)
-    return nome_aleatorio
-
-@bp.route('/perfil')
-@login_required
-def perfil():
-    return render_template('perfil.html', title='Meu Perfil')
-
-@bp.route('/perfil/editar', methods=['GET', 'POST'])
-@login_required
-def editar_perfil():
-    form = ProfileForm()
-    if form.validate_on_submit():
-        if form.foto_perfil.data:
-            nome_arquivo = salvar_foto(form.foto_perfil.data)
-            current_user.foto_perfil = nome_arquivo
-        current_user.nome = form.nome.data
-        db.session.commit()
-        flash('Seu perfil foi atualizado com sucesso!', 'success')
-        return redirect(url_for('main.perfil'))
-    elif request.method == 'GET':
-        form.nome.data = current_user.nome
-    
-    foto_perfil = url_for('static', filename='profile_pics/' + (current_user.foto_perfil or 'default.png'))
-    return render_template('perfil_editar.html', title='Editar Perfil', form=form, foto_perfil=foto_perfil)
