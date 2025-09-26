@@ -38,7 +38,6 @@
         .navbar { background-color: var(--navbar-bg) !important; }
         .card, .list-group-item, .modal-content { background-color: var(--secondary-bg); }
         
-        /* --- ESTILOS GLOBAIS PARA FOTOS DE PERFIL --- */
         .profile-pic-small { width: 28px; height: 28px; object-fit: cover; }
         .profile-pic-medium { width: 100px; height: 100px; object-fit: cover; }
         .profile-pic-large { width: 150px; height: 150px; object-fit: cover; }
@@ -57,7 +56,7 @@
     <script>
         document.addEventListener('DOMContentLoaded', () => {
             const themeToggle = document.getElementById('theme-toggle');
-            if (themeToggle) { // Garante que o script não quebre em páginas sem o botão
+            if (themeToggle) { 
                 const themeIcon = document.getElementById('theme-icon');
                 const htmlElement = document.documentElement;
 

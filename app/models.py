@@ -1,9 +1,8 @@
-from app import db, login # Renomeado para 'login' para consistência
+from app import db, login 
 from werkzeug.security import generate_password_hash, check_password_hash
 from flask_login import UserMixin
 from datetime import datetime
 
-# O user_loader deve usar a instância do LoginManager
 @login.user_loader
 def load_user(user_id):
     return User.query.get(int(user_id))
@@ -15,8 +14,6 @@ class User(UserMixin, db.Model):
     senha_hash = db.Column(db.String(128))
     perfil = db.Column(db.String(20), nullable=False, default='atendente')
     
-    # --- CORREÇÃO APLICADA AQUI ---
-    # Adiciona o campo para a foto de perfil com um valor padrão.
     foto_perfil = db.Column(db.String(100), nullable=False, default='default.png')
 
     def set_password(self, password):

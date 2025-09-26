@@ -21,7 +21,6 @@ def salvar_foto(form_foto):
     form_foto.save(caminho_completo)
     return filename
 
-# --- ROTAS DE AUTENTICAÇÃO E DASHBOARD ---
 @bp.route('/login', methods=['GET', 'POST'])
 def login():
     if current_user.is_authenticated:
@@ -49,7 +48,6 @@ def index():
     total_reservas = Reserva.query.filter_by(status='Ativa').count()
     return render_template('index.html', title='Dashboard', total_pacotes=total_pacotes, total_reservas=total_reservas)
 
-# --- ROTAS DE PERFIL ---
 @bp.route('/perfil')
 @login_required
 def perfil():
@@ -70,11 +68,9 @@ def editar_perfil():
     elif request.method == 'GET':
         form.nome.data = current_user.nome
     
-    # CORREÇÃO: Passando a variável com um nome claro para o template.
     foto_perfil_url = url_for('static', filename='profile_pics/' + (current_user.foto_perfil or 'default.png'))
     return render_template('perfil_editar.html', title='Editar Perfil', form=form, foto_perfil_url=foto_perfil_url)
 
-# --- ROTAS DE PACOTES ---
 @bp.route('/pacotes')
 @login_required
 def pacotes():
@@ -111,7 +107,6 @@ def editar_pacote(id):
         return redirect(url_for('main.pacotes'))
     return render_template('form_pacote.html', title='Editar Pacote', form=form, legenda='Editar Pacote')
 
-# --- ROTAS DE RESERVAS ---
 @bp.route('/reservas/<int:pacote_id>', methods=['GET', 'POST'])
 @login_required
 def gerenciar_reservas(pacote_id):
